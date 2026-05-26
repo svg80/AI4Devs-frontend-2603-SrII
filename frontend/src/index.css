@@ -88,3 +88,32 @@ code {
     max-width: 100%;
   }
 }
+
+/* ─── Drag & Drop state styles ─── */
+
+.kanban-column {
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.kanban-column--drag-over {
+  box-shadow: 0 0 0 3px #0d6efd; /* Bootstrap primary */
+  background-color: #e7f1ff;
+}
+
+.candidate-card--dragging {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: rotate(2deg);
+}
+
+.candidate-card {
+  transition: opacity 0.2s ease;
+  cursor: grab;
+}
+
+.candidate-card:active {
+  cursor: grabbing;
+}
+
+.candidate-card--dragging {
+  cursor: grabbing;
+}

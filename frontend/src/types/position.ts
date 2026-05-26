@@ -68,3 +68,22 @@ export type PageState<T> =
   | { status: 'loading' }
   | { status: 'error'; error: string }
   | { status: 'success'; data: T };
+
+// ─── Drag & Drop types (Ticket 003) ────────────────────────────────
+
+/** Information captured when a drag starts, used for rollback */
+export interface DragItem {
+  candidateId: number;
+  applicationId: number;
+  sourceStepName: string;
+  destinationStepName: string;
+}
+
+/** Per-candidate updating state — true while the API call is in flight */
+export type UpdatingState = Set<number>;
+
+/** Functions exposed to the parent for optimistic move / rollback */
+export interface KanbanCallbacks {
+  onMoveOptimistic: (candidateId: number, fromStep: string, toStep: string) => void;
+  onRollback: (candidateId: number, fromStep: string) => void;
+}

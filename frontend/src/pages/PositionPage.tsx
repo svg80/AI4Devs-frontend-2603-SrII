@@ -1,8 +1,10 @@
-import React, { useEffect, useReducer, useCallback } from 'react';
+import React, { useEffect, useReducer, useCallback, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Spinner, Alert, Button } from 'react-bootstrap';
+import { Toaster } from 'react-hot-toast';
 import { getInterviewFlow, getCandidates } from '../services/api';
-import KanbanBoard from '../components/KanbanBoard';
+import KanbanBoard, { groupCandidatesByStep } from '../components/KanbanBoard';
+import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import type { PageState, InterviewFlowResponse, CandidateData } from '../types/position';
 
 /**
@@ -69,7 +71,7 @@ function candidatesReducer(
  * gets the candidates. Each fetch has independent loading/error states so that
  * a candidate error does not hide the already-rendered columns.
  *
- * Accepts injectable fetch functions for testing.
+ * Manages a `candidatesByStep` map for drag-and-drop optimistic updates.
  */
 interface PositionPageProps {
   /** Used by tests to inject a fetch override for interview flow */
@@ -90,6 +92,11 @@ const PositionPage: React.FC<PositionPageProps> = ({
   const [candidatesState, dispatchCandidates] = useReducer(candidatesReducer, {
     status: 'idle',
   });
+
+  // Mutable map of candidates grouped by step name, used for optimistic DnD updates
+  const [candidatesByStep, setCandidatesByStep] = useState<
+    Map<string, CandidateData[]>
+  >(new Map());
 
   // ── Interview flow fetching ──────────────────────────────────────
 
@@ -128,12 +135,21 @@ const PositionPage: React.FC<PositionPageProps> = ({
       }
       const data = await fetchCandidates(numericId);
       dispatchCandidates({ type: 'FETCH_SUCCESS', data });
+
+      // Build the grouped map for DnD optimistic updates
+      if (flowState.status === 'success') {
+        const grouped = groupCandidatesByStep(
+          data,
+          flowState.data.interviewFlow.interviewSteps,
+        );
+        setCandidatesByStep(grouped);
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Error al cargar candidatos.';
       dispatchCandidates({ type: 'FETCH_ERROR', error: message });
     }
-  }, [id, fetchCandidates]);
+  }, [id, fetchCandidates, flowState]);
 
   // Fetch interview flow on mount
   useEffect(() => {
@@ -146,6 +162,56 @@ const PositionPage: React.FC<PositionPageProps> = ({
       loadCandidates();
     }
   }, [flowState.status, loadCandidates]);
+
+  // ── Optimistic move / rollback handlers ──────────────────────────
+
+  const handleMoveOptimistic = useCallback(
+    (candidateId: number, fromStep: string, toStep: string) => {
+      setCandidatesByStep((prev) => {
+        const next = new Map(prev);
+        const candidate = prev.get(fromStep)?.find((c) => c.id === candidateId);
+
+        if (!candidate) return prev; // safety: candidate not found
+
+        const fromList = (prev.get(fromStep) ?? []).filter(
+          (c) => c.id !== candidateId,
+        );
+        const toList = prev.get(toStep) ?? [];
+
+        next.set(fromStep, fromList);
+        next.set(toStep, [...toList, candidate]);
+        return next;
+      });
+    },
+    [],
+  );
+
+  const handleRollback = useCallback(
+    (_candidateId: number, _fromStep: string) => {
+      // Simplest approach: refetch the full candidate list from the API
+      // This guarantees consistency even after rapid multiple drops.
+      loadCandidates();
+    },
+    [loadCandidates],
+  );
+
+  // ── Sorted steps (memoized) ──────────────────────────────────────
+
+  const sortedSteps = useMemo(() => {
+    if (flowState.status !== 'success') return [];
+    return [...flowState.data.interviewFlow.interviewSteps].sort(
+      (a, b) => a.orderIndex - b.orderIndex,
+    );
+  }, [flowState]);
+
+  // ── Drag-and-drop hook (uses sorted steps + map) ─────────────────
+
+  const { onDragEnd, updatingIds } = useDragAndDrop({
+    candidatesByStep,
+    interviewSteps: sortedSteps,
+    onMoveOptimistic: handleMoveOptimistic,
+    onRollback: handleRollback,
+  });
 
   // ── Render ──────────────────────────────────────────────────────
 
@@ -186,17 +252,30 @@ const PositionPage: React.FC<PositionPageProps> = ({
   // Success state — flow loaded, render board with candidates
   return (
     <Container className="mt-4">
+      {/* react-hot-toast Toaster for notifications */}
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            borderRadius: '8px',
+            background: '#333',
+            color: '#fff',
+          },
+        }}
+      />
+
       <KanbanBoard
         positionName={flowState.data.positionName}
         interviewSteps={flowState.data.interviewFlow.interviewSteps}
-        candidates={
-          candidatesState.status === 'success' ? candidatesState.data : null
-        }
+        candidatesByStep={candidatesByStep}
         candidatesLoading={candidatesState.status === 'loading'}
         candidatesError={
           candidatesState.status === 'error' ? candidatesState.error : null
         }
         onRetryCandidates={loadCandidates}
+        onDragEnd={onDragEnd}
+        updatingIds={updatingIds}
       />
     </Container>
   );

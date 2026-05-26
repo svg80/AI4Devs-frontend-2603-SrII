@@ -1,5 +1,6 @@
 import React from 'react';
-import { Card } from 'react-bootstrap';
+import { Card, Spinner } from 'react-bootstrap';
+import { Draggable } from '@hello-pangea/dnd';
 import type { CandidateData } from '../types/position';
 
 /**
@@ -23,20 +24,24 @@ const FALLBACK_NAME = 'Candidato sin nombre';
 
 interface CandidateCardProps {
   candidate: CandidateData;
+  /** Index within the droppable list (required by @hello-pangea/dnd) */
+  index: number;
+  /** Whether this card is currently being updated (shows spinner) */
+  isUpdating?: boolean;
 }
 
 /**
  * Presentational card for a single candidate.
  *
- * Renders within a kanban column with:
- * - Full name (or fallback)
- * - Average score (formatted via formatScore)
- * - `data-candidate-id` for drag-and-drop future use
- * - `data-testid` for testing
- * - `role="article"` for semantics
- * - `tabIndex={0}` and Enter key handler for keyboard accessibility
+ * Wrapped in a `<Draggable>` for drag-and-drop support.
+ * Shows a spinner overlay when `isUpdating` is true.
+ * Drag is disabled while updating.
  */
-const CandidateCard: React.FC<CandidateCardProps> = ({ candidate }) => {
+const CandidateCard: React.FC<CandidateCardProps> = ({
+  candidate,
+  index,
+  isUpdating = false,
+}) => {
   const displayName = candidate.fullName.trim() || FALLBACK_NAME;
   const scoreLabel = formatScore(candidate.averageScore);
 
@@ -48,24 +53,60 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ candidate }) => {
   };
 
   return (
-    <Card
-      className="shadow-sm mb-2 candidate-card"
-      data-candidate-id={candidate.id}
-      data-testid={`candidate-card-${candidate.id}`}
-      role="article"
-      tabIndex={0}
-      aria-label={`Candidato: ${displayName}, puntuación: ${scoreLabel}`}
-      onKeyDown={handleKeyDown}
+    <Draggable
+      draggableId={String(candidate.id)}
+      index={index}
+      isDragDisabled={isUpdating}
     >
-      <Card.Body className="py-2 px-3">
-        <Card.Title className="fs-6 mb-0 text-dark">
-          {displayName}
-        </Card.Title>
-        <Card.Text className="mb-0 text-muted small">
-          Puntuación: <span data-testid={`score-${candidate.id}`}>{scoreLabel}</span>
-        </Card.Text>
-      </Card.Body>
-    </Card>
+      {(provided, snapshot) => (
+        <article
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          className={`candidate-card card shadow-sm mb-2 ${
+            snapshot.isDragging ? 'candidate-card--dragging' : ''
+          }`}
+          style={{
+            ...provided.draggableProps.style,
+            opacity: isUpdating ? 0.6 : 1,
+          }}
+          data-candidate-id={candidate.id}
+          data-testid={`candidate-card-${candidate.id}`}
+          role="article"
+          tabIndex={0}
+          aria-label={`Candidato: ${displayName}, puntuación: ${scoreLabel}`}
+          aria-roledescription="draggable candidate card"
+          onKeyDown={handleKeyDown}
+        >
+          <Card.Body className="d-flex justify-content-between align-items-center py-2 px-3">
+            <div>
+              <Card.Title className="fs-6 mb-0 text-dark">
+                {displayName}
+              </Card.Title>
+              <Card.Text className="mb-0 text-muted small">
+                Puntuación:{' '}
+                <span data-testid={`score-${candidate.id}`}>
+                  {scoreLabel}
+                </span>
+              </Card.Text>
+            </div>
+            {isUpdating && (
+              <Spinner
+                animation="border"
+                size="sm"
+                className="ms-2"
+                role="status"
+                data-testid={`spinner-${candidate.id}`}
+              >
+                <span className="visually-hidden">
+                  Actualizando candidato...
+                </span>
+              </Spinner>
+            )}
+          </Card.Body>
+        </article>
+      )}
+    </Draggable>
   );
 };
 

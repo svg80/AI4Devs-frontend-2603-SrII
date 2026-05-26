@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import CandidateCard, { formatScore } from '../components/CandidateCard';
 import type { CandidateData } from '../types/position';
 
@@ -14,9 +15,26 @@ const baseCandidate: CandidateData = {
   averageScore: 4,
 };
 
+/**
+ * Wraps CandidateCard in the required DragDropContext + Droppable
+ * providers so that @hello-pangea/dnd's Draggable can find its context.
+ */
 function renderCard(candidateOverrides: Partial<CandidateData> = {}) {
   const candidate = { ...baseCandidate, ...candidateOverrides };
-  return render(<CandidateCard candidate={candidate} />);
+  const onDragEnd = jest.fn();
+
+  return render(
+    <DragDropContext onDragEnd={onDragEnd}>
+      <Droppable droppableId="test-column" direction="vertical">
+        {(provided) => (
+          <div ref={provided.innerRef} {...provided.droppableProps}>
+            <CandidateCard candidate={candidate} index={0} />
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+    </DragDropContext>,
+  );
 }
 
 // ── formatScore unit tests ───────────────────────────────────────
