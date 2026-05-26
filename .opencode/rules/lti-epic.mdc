@@ -1,0 +1,25 @@
+---
+description: Always consult the LTI epic specification in task/creando_interfaz_gestion_aplicaciones_LTI.md for full requirements, API contracts, and design guidance.
+---
+
+# LTI Position Management Epic
+
+The canonical epic specification is at `task/creando_interfaz_gestion_aplicaciones_LTI.md`. This file defines the full scope of the position management interface feature.
+
+## Mandatory rules
+
+1. **Read the epic first** — before implementing any frontend work related to position/candidate management, read `task/creando_interfaz_gestion_aplicaciones_LTI.md` in full.
+2. **API contracts** — the epic documents three endpoints that backend provides. Follow the exact request/response shapes documented there:
+   - `GET /positions/:id/interviewFlow` — interview process phases
+   - `GET /positions/:id/candidates` — candidate list with scores and current step
+   - `PUT /candidates/:id/stage` — update candidate stage (drag & drop)
+3. **Kanban UI** — the page must be a kanban-style board with columns per interview phase and candidate cards showing full name and average score.
+4. **Drag & drop** — moving a candidate to a different column must call `PUT /candidates/:id/stage` with the new `currentInterviewStep`.
+5. **Mobile layout** — phases must stack vertically on mobile (full-width columns).
+6. **Navigation** — include a back arrow next to the position title that returns to the position list.
+7. **Scope** — you are building the page content only; global layout (header, footer) already exists.
+
+## Referencing
+
+- Always reference this epic when discussing or implementing position management features.
+- If requirements are unclear, re-read the epic before asking for clarification.

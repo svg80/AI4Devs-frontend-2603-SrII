@@ -1,0 +1,10 @@
+---
+description: Always use the standard OpenAPI/Swagger spec to read endpoint documentation instead of guessing from code.
+---
+
+# Use Swagger for API documentation
+
+- The canonical API spec is `backend/api-spec.yaml` (OpenAPI 3.0).
+- It is served at `http://localhost:3010/api-docs/` when the backend is running.
+- Never infer request/response shapes from source code alone — check the OpenAPI spec first.
+- If the spec is missing an endpoint, update `backend/api-spec.yaml` and the backend code together.

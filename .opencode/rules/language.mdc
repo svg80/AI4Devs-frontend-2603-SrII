@@ -1,0 +1,13 @@
+---
+description: All code should be written in TypeScript, the primary language used in this repo.
+---
+
+# Language: TypeScript
+
+This repo uses **TypeScript** as its primary language for both frontend and backend code.
+
+- Write all source code in TypeScript (`.ts` / `.tsx`).
+- Use strict TypeScript typing — avoid `any` unless absolutely necessary.
+- The backend uses Express + TypeScript (`backend/src/`).
+- The frontend uses React + TypeScript (`frontend/src/`).
+- Follow the existing patterns in the codebase (DDD-style backend, functional React components with Bootstrap).

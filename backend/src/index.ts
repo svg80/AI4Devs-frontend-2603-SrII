@@ -6,6 +6,10 @@ import candidateRoutes from './routes/candidateRoutes';
 import positionRoutes from './routes/positionRoutes';
 import { uploadFile } from './application/services/fileUploadService';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
+import yaml from 'js-yaml';
+import fs from 'fs';
+import path from 'path';
 
 // Extender la interfaz Request para incluir prisma
 declare global {
@@ -36,6 +40,12 @@ app.use(cors({
   origin: 'http://localhost:3000',
   credentials: true
 }));
+
+// Serve Swagger API docs
+const swaggerDocument = yaml.load(
+  fs.readFileSync(path.join(__dirname, '../api-spec.yaml'), 'utf8')
+);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument as object));
 
 // Import and use candidateRoutes
 app.use('/candidates', candidateRoutes);
