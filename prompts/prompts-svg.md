@@ -97,3 +97,74 @@ execute prompt @prompts/prompts-svg/create-develop-ticket-command.md
 ```text
 /product-owner @task/creando_interfaz_gestion_aplicaciones_LTI.md
 ``` 
+
+# Prompt 18 - Enriquecer la tarea 001
+```text
+/enrich-ticket @task/creando-interfaz-gestion-aplicaciones-lti/001-setup-ruta-y-tablero-kanban.md 
+``` 
+
+# Prompt 19 - Enriquecer la tarea 002
+```text
+/enrich-ticket /enrich-ticket @task/creando-interfaz-gestion-aplicaciones-lti/002-renderizar-tarjetas-de-candidatos.md  
+``` 
+
+# Prompt 20 - Enriquecer la tarea 003
+```text
+/enrich-ticket /enrich-ticket @task/creando-interfaz-gestion-aplicaciones-lti/003-implementar-arrastre-y-actualizacion.md  
+``` 
+
+# Prompt 21 - Enriquecer la tarea 004
+```text
+/enrich-ticket /enrich-ticket @task/creando-interfaz-gestion-aplicaciones-lti/004-layout-responsivo-movil.md  
+``` 
+
+# Prompt 22 - Generar un prompt para crear una skill de backend developer 
+```text
+Generate a prompt in the folder @prompts/prompts-svg/ where I want to generate a backend software senior developer with the best practices. The skill must be placed in the .opencode/skills. This skill will be used from a sub-agent. Do not include the actual skill, only generate the best prompt possible to be execute to achive de goal. 
+``` 
+
+# Prompt 23 - Ejecutar el prompt que genera la skill
+```text
+execute prompt @prompts/prompts-svg/create-backend-skill.md
+``` 
+
+# Prompt 24 - Generar el agente que usa la skill
+```text
+Generate a brand new prompt in the folder @prompts/prompts-svg/ to create a new subagent in the folder @.opencode/agents. That agent will be using the skill @.opencode/skills/backend-senior/
+``` 
+
+# Prompt 25 - Modificar prompts y skill para usar TDD en lugar de BDD  
+```text
+Modify @prompts/prompts-svg/create-backend-skill.md @prompts/prompts-svg/create-backend-agent.md and @.opencode/skills/backend-senior/ to use TDD instead of BDD
+
+``` 
+
+# Prompt 25 - Ejecutar el prompt que genera el sub-agente
+```text
+execute prompt @prompts/prompts-svg/create-backend-agent.md
+``` 
+
+# Prompt  - 
+```text
+
+``` 
+
+# Prompt  - 
+```text
+
+``` 
+
+# Prompt  - 
+```text
+
+``` 
+
+# Prompt  - 
+```text
+
+``` 
+
+# Prompt  - 
+```text
+
+``` 
