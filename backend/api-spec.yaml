@@ -212,6 +212,18 @@ paths:
                       type: string
                     averageScore:
                       type: number
+                    id:
+                      type: integer
+                      description: "Candidate ID (used as draggableId in frontend)"
+                    applicationId:
+                      type: integer
+                      description: "Application ID (used in PUT /candidates/{id} payload)"
+                  required:
+                    - fullName
+                    - currentInterviewStep
+                    - averageScore
+                    - id
+                    - applicationId
         '404':
           description: Position not found
         '500':

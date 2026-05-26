@@ -72,3 +72,58 @@ Esta segunda iteración (ticket 002) añade la capa de datos de candidatos: fetc
 - **Container/Presentational pattern**: `PositionPage` es smart container con reducers; `KanbanBoard` es container/presentational híbrido (agrupa candidatos); `KanbanColumn`, `CandidateCard`, `SkeletonCard` son presentacionales puros.
 - **Discriminated union**: Se añadió `{ status: 'idle' }` a `PageState<T>` para el estado inicial de candidates (no se fetchea hasta que el flow está listo).
 - **act() warnings**: Los tests muestran warnings de `act()` por los efectos asíncronos — es esperado con React 18 y no afecta la validez de las aserciones.
+
+---
+
+# Ticket 002.5: Extender respuesta GET /position/:id/candidates con id y applicationId
+
+## Resumen
+
+El endpoint `GET /position/:id/candidates` ya devolvía `id` (candidateId) y `applicationId` en el servicio backend (`positionService.ts`), pero estos campos no estaban documentados en la especificación OpenAPI ni verificados por los tests unitarios. Este ticket formaliza el contrato: actualiza la especificación OpenAPI, añade tests TDD al servicio y controlador para verificar la presencia, valores correctos y tipo numérico de estos campos, y desbloquea la dependencia del ticket 003 (drag & drop) que necesita `id` como `draggableId` y `applicationId` en el payload de `PUT /candidates/:id`.
+
+Además, se migró la configuración de ESLint del formato legacy `.eslintrc.js` (incompatible con ESLint v9) al formato flat config (`eslint.config.mjs`) con soporte TypeScript mediante `@typescript-eslint/parser` y `@typescript-eslint/eslint-plugin`, y se corrigió `jest.config.js` para ignorar los archivos compilados en `dist/`.
+
+## Cambios
+
+| Archivo | Descripción |
+|---|---|
+| `backend/api-spec.yaml` | Añadidos `id` (type: integer) y `applicationId` (type: integer) a la respuesta 200 de `GET /position/{id}/candidates`, con descripciones y array `required` |
+| `backend/src/application/services/positionService.test.ts` | Test actualizado para verificar `id` y `applicationId` en cada candidato; 2 nuevos tests: múltiples candidatos con diferentes ids, tipo numérico entero |
+| `backend/src/presentation/controllers/positionController.test.ts` | Mock actualizado para incluir `id` y `applicationId` en aserciones 200; nuevo test de error 500 cuando el servicio falla |
+| `backend/jest.config.js` | Añadido `testMatch: ['**/src/**/*.test.ts']` para excluir tests compilados en `dist/` |
+| `backend/eslint.config.mjs` | **Nuevo**: Configuración ESLint v9 flat config con TypeScript parser, plugin y Prettier |
+| `backend/package.json` | Nuevas dependencias dev: `@typescript-eslint/parser`, `@typescript-eslint/eslint-plugin` |
+| `backend/.eslintrc.js` | Eliminado (reemplazado por `eslint.config.mjs`) |
+| `backend/eslint.config.js` | Eliminado (reemplazado por `eslint.config.mjs`) |
+
+## Criterios de aceptación
+
+- [x] **CA-01**: `api-spec.yaml` añade `id` (type: integer) y `applicationId` (type: integer) en la sección `properties` de la respuesta 200 de `GET /position/{id}/candidates`
+- [x] **CA-02**: `api-spec.yaml` incluye descripciones para `id` ("Candidate ID used as draggableId") y `applicationId` ("Application ID used in PUT /candidates/{id} payload")
+- [x] **CA-03**: `positionService.test.ts` verifica que cada elemento devuelto incluye `id` y `applicationId` con valores correctos
+- [x] **CA-04**: `positionService.test.ts` verifica que `id` y `applicationId` son números enteros
+- [x] **CA-05**: `positionService.test.ts` verifica el escenario de múltiples candidatos con diferentes `id` y `applicationId`
+- [x] **CA-06**: `positionController.test.ts` verifica que la respuesta JSON 200 incluye `id` y `applicationId`
+- [x] **CA-07**: `positionController.test.ts` verifica que el controlador responde con 500 cuando el servicio lanza un error
+- [x] **CA-08**: `npm test` en `backend/` pasa sin errores (7/7 tests)
+- [x] **CA-09**: `npx tsc --noEmit` en `backend/` pasa sin errores de tipo
+- [x] **CA-10**: La especificación OpenAPI (`api-spec.yaml`) incluye los cambios requeridos
+
+## Testing
+
+- **Framework**: Jest 29 + ts-jest
+- **Tests**: 7 tests total (3 en positionService, 2 en positionController, 2 pre-existentes de candidate que continúan pasando)
+- **Cobertura de nuevo código**:
+  - Test 1: Verifica `id` y `applicationId` presentes y con valores correctos en el happy path
+  - Test 2: Verifica múltiples candidatos con diferentes `id`/`applicationId` (mapeo candidate id → `app.candidate.id` y application id → `app.id`)
+  - Test 3: Verifica que `id` y `applicationId` son del tipo `number` y enteros (`Number.isInteger`)
+  - Test 4 (controlador): Verifica que la respuesta 200 incluye ambos campos via `expect.objectContaining`
+  - Test 5 (controlador): Verifica error 500 cuando el servicio rechaza
+- **Ejecución**: `cd backend && npm test`
+
+## Notas para revisores
+
+- **No rompe compatibilidad**: El servicio ya devolvía `id` y `applicationId` — los tests simplemente validan el contrato existente. El controlador pasa la respuesta del servicio directamente a `res.json()`, sin transformación.
+- **ESLint migration**: El proyecto tenía ESLint v9 sin configuración flat config y sin soporte TypeScript. Se creó `eslint.config.mjs` con `@typescript-eslint/parser` y `@typescript-eslint/eslint-plugin` (recomended rules). Hay ~950 errores de formato Prettier pre-existentes en todo `src/` que no forman parte del alcance de este ticket.
+- **Dependencia desbloqueada**: Este ticket es bloqueante para `003-implementar-arrastre-y-actualizacion.md`, que necesita `id` como `draggableId` y `applicationId` en el payload de `PUT /candidates/:id`. Con este cambio, el frontend ya recibe ambos campos desde `GET /position/:id/candidates`.
+- **Deuda técnica documentada**: El controlador trata todos los errores del servicio como 500 (incluso "Position not found" debería ser 404). No se aborda en este ticket por estar fuera de alcance.
