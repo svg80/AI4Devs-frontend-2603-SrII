@@ -33,9 +33,13 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         <div
           ref={provided.innerRef}
           {...provided.droppableProps}
-          className={`kanban-column ${
-            snapshot.isDraggingOver ? 'kanban-column--drag-over' : ''
-          }`}
+          className={`
+            kanban-column
+            w-100
+            flex-shrink-0
+            ${snapshot.isDraggingOver ? 'kanban-column--drag-over' : ''}
+          `}
+          style={{ minWidth: '280px' }}
           role="region"
           aria-label={`Fase: ${phase.name}`}
           data-testid={`kanban-column-${phase.id}`}

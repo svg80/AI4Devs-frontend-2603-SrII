@@ -69,6 +69,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({
           style={{
             ...provided.draggableProps.style,
             opacity: isUpdating ? 0.6 : 1,
+            minHeight: '44px',
           }}
           data-candidate-id={candidate.id}
           data-testid={`candidate-card-${candidate.id}`}

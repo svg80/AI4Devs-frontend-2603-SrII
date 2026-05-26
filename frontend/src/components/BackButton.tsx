@@ -13,7 +13,11 @@ interface BackButtonProps {
  */
 const BackButton: React.FC<BackButtonProps> = ({ to = '/positions' }) => (
   <Link to={to} aria-label="Volver al listado de posiciones">
-    <Button variant="outline-secondary" size="sm">
+    <Button
+      variant="outline-secondary"
+      size="sm"
+      style={{ minWidth: '44px', minHeight: '44px' }}
+    >
       ← Volver
     </Button>
   </Link>

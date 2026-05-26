@@ -192,12 +192,17 @@ Create a new task in `@task/creando-interfaz-gestion-aplicaciones-lti/002.5-exte
 /enrich-ticket @task/creando-interfaz-gestion-aplicaciones-lti/002.5-extend-response-get-position-id-candidates.md 
 ``` 
 
-# Prompt 36 - Implementar tarea de back 
+# Prompt 36 - Implementar tarea de back 002.5
 ```text
 /develop-backend-ticket @task/creando-interfaz-gestion-aplicaciones-lti/002.5-extend-response-get-position-id-candidates.enriched.md  and update @task/creando-interfaz-gestion-aplicaciones-lti/003-implementar-arrastre-y-actualizacion.enriched.md 
 ``` 
 
-# Prompt 37 - Implementar tarea de back 
+# Prompt 37 - Implementar tarea 003
 ```text
 /develop-ticket @task/creando-interfaz-gestion-aplicaciones-lti/003-implementar-arrastre-y-actualizacion.enriched.md. Note that the backend team has extended the `GET /position/:id/candidates` response with id and applicationId
+```
+
+# Prompt 8 - Implementar tarea 004 
+```text
+/develop-ticket @task/creando-interfaz-gestion-aplicaciones-lti/004-layout-responsivo-movil.enriched.md.
 ```

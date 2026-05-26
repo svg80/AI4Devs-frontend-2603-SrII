@@ -80,13 +80,20 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     [interviewSteps],
   );
 
+  const headerMarkup = (
+    <div
+      className="kanban-header d-flex align-items-center gap-2 px-3 px-md-4 py-3"
+      data-testid="kanban-header"
+    >
+      <BackButton />
+      <h1 className="kanban-title h4 mb-0 text-truncate">{positionName}</h1>
+    </div>
+  );
+
   if (sortedSteps.length === 0) {
     return (
-      <div className="kanban-board">
-        <div className="kanban-header">
-          <BackButton />
-          <h1 className="kanban-title">{positionName}</h1>
-        </div>
+      <div className="kanban-board" data-testid="kanban-board">
+        {headerMarkup}
         <Alert variant="info">
           No hay fases definidas para este proceso.
         </Alert>
@@ -95,11 +102,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   }
 
   return (
-    <div className="kanban-board">
-      <div className="kanban-header">
-        <BackButton />
-        <h1 className="kanban-title">{positionName}</h1>
-      </div>
+    <div className="kanban-board" data-testid="kanban-board">
+      {headerMarkup}
 
       {/* Candidates error: independent alert that does not hide columns */}
       {candidatesError && (
@@ -122,7 +126,12 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
       )}
 
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="kanban-columns" role="listbox" aria-label="Fases del proceso">
+        <div
+          className="kanban-columns d-flex flex-column flex-md-row"
+          role="listbox"
+          aria-label="Fases del proceso"
+          data-testid="kanban-columns"
+        >
           {sortedSteps.map((step) => (
             <KanbanColumn
               key={step.id}

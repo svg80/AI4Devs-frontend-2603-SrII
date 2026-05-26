@@ -12,7 +12,12 @@ code {
     monospace;
 }
 
-/* ─── Kanban Board ─── */
+/* ═══════════════════════════════════════════════════════════════════
+   KANBAN — MOBILE-FIRST LAYOUT
+   Base styles = mobile (< 768px). Desktop overrides via min-width.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Kanban Board Container ─── */
 
 .kanban-board {
   display: flex;
@@ -20,40 +25,95 @@ code {
   min-height: 60vh;
 }
 
+/* ─── Kanban Header (responsive via Bootstrap px-3 px-md-4) ─── */
+
 .kanban-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
 }
 
 .kanban-title {
   margin: 0;
-  font-size: 1.75rem;
+  font-size: 1.25rem;
   font-weight: 600;
+  min-width: 0; /* allow text-truncate to work */
 }
+
+/* Desktop header */
+@media (min-width: 768px) {
+  .kanban-title {
+    font-size: 1.75rem;
+  }
+}
+
+/* ─── Kanban Columns Container ───
+ * Mobile: stacked vertically, no horizontal scroll.
+ * Desktop: horizontal row with overflow-x auto. */
 
 .kanban-columns {
   display: flex;
+  flex-direction: column;     /* mobile-first: stacked */
   gap: 1rem;
-  overflow-x: auto;
   padding-bottom: 1rem;
   flex: 1;
+  overflow: visible;          /* no clipping on mobile */
 }
 
-/* ─── Kanban Column ─── */
+@media (min-width: 768px) {
+  .kanban-columns {
+    flex-direction: row;      /* desktop: horizontal row */
+    overflow-x: auto;         /* desktop: scroll if needed */
+    overflow-y: hidden;
+  }
+}
+
+/* ─── Kanban Column ───
+ * Mobile: full width (w-100 via Bootstrap).
+ * Desktop: fixed min-width with flex-shrink-0. */
 
 .kanban-column {
   background: #f8f9fa;
   border: 1px solid #dee2e6;
   border-radius: 0.5rem;
-  min-width: 280px;
-  max-width: 320px;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  /* touch-action: auto is the browser default, but we make it explicit
+     to prevent any global touch-action: none from blocking scroll */
+  touch-action: auto;
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
 }
+
+/* Desktop: columns have fixed min-width */
+@media (min-width: 768px) {
+  .kanban-column {
+    flex-shrink: 0;
+  }
+}
+
+/* Tablet vertical: 2 columns per row when there's room */
+@media (min-width: 768px) and (max-width: 991px) {
+  .kanban-columns {
+    flex-wrap: wrap;
+  }
+  .kanban-column {
+    flex: 0 0 calc(50% - 0.5rem);
+    min-width: unset;
+    max-width: none;
+  }
+}
+
+/* Desktop >= 992px: taller columns with fixed min/max width */
+@media (min-width: 992px) {
+  .kanban-column {
+    min-width: 280px;
+    max-width: 320px;
+    flex-shrink: 0;
+  }
+}
+
+/* ─── Column internals ─── */
 
 .kanban-column-header {
   background: #e9ecef;
@@ -75,25 +135,7 @@ code {
   min-height: 120px;
 }
 
-/* ─── Responsive: stack columns on mobile ─── */
-
-@media (max-width: 768px) {
-  .kanban-columns {
-    flex-direction: column;
-    overflow-x: visible;
-  }
-
-  .kanban-column {
-    min-width: 100%;
-    max-width: 100%;
-  }
-}
-
 /* ─── Drag & Drop state styles ─── */
-
-.kanban-column {
-  transition: box-shadow 0.2s ease, background-color 0.2s ease;
-}
 
 .kanban-column--drag-over {
   box-shadow: 0 0 0 3px #0d6efd; /* Bootstrap primary */
@@ -116,4 +158,13 @@ code {
 
 .candidate-card--dragging {
   cursor: grabbing;
+}
+
+/* ─── Reduced motion ─── */
+
+@media (prefers-reduced-motion: reduce) {
+  .kanban-column,
+  .candidate-card {
+    transition: none;
+  }
 }
