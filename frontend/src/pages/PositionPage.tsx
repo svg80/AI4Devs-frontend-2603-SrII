@@ -1,24 +1,33 @@
 import React, { useEffect, useReducer, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Spinner, Alert, Button } from 'react-bootstrap';
-import { getInterviewFlow } from '../services/api';
+import { getInterviewFlow, getCandidates } from '../services/api';
 import KanbanBoard from '../components/KanbanBoard';
-import type { PageState, InterviewFlowResponse } from '../types/position';
+import type { PageState, InterviewFlowResponse, CandidateData } from '../types/position';
 
 /**
- * Action types for the reducer that manages PositionPage state.
+ * Action types for the reducer that manages the interview flow state.
  */
-type Action =
+type FlowAction =
   | { type: 'FETCH_START' }
   | { type: 'FETCH_SUCCESS'; data: InterviewFlowResponse }
   | { type: 'FETCH_ERROR'; error: string };
 
 /**
- * Reducer for page state — uses discriminated union for type safety.
+ * Action types for the reducer that manages the candidates state (independent).
  */
-function pageReducer(
+type CandidatesAction =
+  | { type: 'FETCH_IDLE' }
+  | { type: 'FETCH_START' }
+  | { type: 'FETCH_SUCCESS'; data: CandidateData[] }
+  | { type: 'FETCH_ERROR'; error: string };
+
+/**
+ * Reducer for interview flow state — uses discriminated union for type safety.
+ */
+function flowReducer(
   state: PageState<InterviewFlowResponse>,
-  action: Action,
+  action: FlowAction,
 ): PageState<InterviewFlowResponse> {
   switch (action.type) {
     case 'FETCH_START':
@@ -33,75 +42,162 @@ function pageReducer(
 }
 
 /**
+ * Reducer for candidates state — independent from flow state.
+ */
+function candidatesReducer(
+  state: PageState<CandidateData[]>,
+  action: CandidatesAction,
+): PageState<CandidateData[]> {
+  switch (action.type) {
+    case 'FETCH_IDLE':
+      return { status: 'idle' };
+    case 'FETCH_START':
+      return { status: 'loading' };
+    case 'FETCH_SUCCESS':
+      return { status: 'success', data: action.data };
+    case 'FETCH_ERROR':
+      return { status: 'error', error: action.error };
+    default:
+      return state;
+  }
+}
+
+/**
  * Smart container for the position detail / kanban page.
  *
- * Orchestrates data fetching via `getInterviewFlow`, manages loading / error /
- * success states, and delegates rendering to the presentational KanbanBoard.
+ * Orchestrates data fetching: first gets the interview flow (phases), then
+ * gets the candidates. Each fetch has independent loading/error states so that
+ * a candidate error does not hide the already-rendered columns.
  *
- * Accepts an optional `disableAutoFetch` prop for testing so tests can
- * control when the fetch happens.
+ * Accepts injectable fetch functions for testing.
  */
 interface PositionPageProps {
-  /** Used by tests to inject a fetch override */
+  /** Used by tests to inject a fetch override for interview flow */
   fetchInterviewFlow?: typeof getInterviewFlow;
+  /** Used by tests to inject a fetch override for candidates */
+  fetchCandidates?: typeof getCandidates;
 }
 
 const PositionPage: React.FC<PositionPageProps> = ({
   fetchInterviewFlow = getInterviewFlow,
+  fetchCandidates = getCandidates,
 }) => {
   const { id } = useParams<{ id: string }>();
-  const [state, dispatch] = useReducer(pageReducer, { status: 'loading' });
+
+  const [flowState, dispatchFlow] = useReducer(flowReducer, {
+    status: 'loading',
+  });
+  const [candidatesState, dispatchCandidates] = useReducer(candidatesReducer, {
+    status: 'idle',
+  });
+
+  // ── Interview flow fetching ──────────────────────────────────────
 
   const loadInterviewFlow = useCallback(async () => {
-    dispatch({ type: 'FETCH_START' });
+    dispatchFlow({ type: 'FETCH_START' });
     try {
       const numericId = Number(id);
       if (Number.isNaN(numericId)) {
-        dispatch({
+        dispatchFlow({
           type: 'FETCH_ERROR',
           error: 'ID de posición no válido.',
         });
         return;
       }
       const data = await fetchInterviewFlow(numericId);
-      dispatch({ type: 'FETCH_SUCCESS', data });
+      dispatchFlow({ type: 'FETCH_SUCCESS', data });
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Error al cargar los datos.';
-      dispatch({ type: 'FETCH_ERROR', error: message });
+      dispatchFlow({ type: 'FETCH_ERROR', error: message });
     }
   }, [id, fetchInterviewFlow]);
 
+  // ── Candidates fetching (independent, after flow loads) ──────────
+
+  const loadCandidates = useCallback(async () => {
+    dispatchCandidates({ type: 'FETCH_START' });
+    try {
+      const numericId = Number(id);
+      if (Number.isNaN(numericId)) {
+        dispatchCandidates({
+          type: 'FETCH_ERROR',
+          error: 'ID de posición no válido.',
+        });
+        return;
+      }
+      const data = await fetchCandidates(numericId);
+      dispatchCandidates({ type: 'FETCH_SUCCESS', data });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Error al cargar candidatos.';
+      dispatchCandidates({ type: 'FETCH_ERROR', error: message });
+    }
+  }, [id, fetchCandidates]);
+
+  // Fetch interview flow on mount
   useEffect(() => {
     loadInterviewFlow();
   }, [loadInterviewFlow]);
 
-  return (
-    <Container className="mt-4">
-      {state.status === 'loading' && (
+  // Once flow is loaded, fetch candidates
+  useEffect(() => {
+    if (flowState.status === 'success') {
+      loadCandidates();
+    }
+  }, [flowState.status, loadCandidates]);
+
+  // ── Render ──────────────────────────────────────────────────────
+
+  // Loading state (flow not yet loaded)
+  if (flowState.status === 'loading') {
+    return (
+      <Container className="mt-4">
         <div className="text-center py-5">
           <Spinner animation="border" role="status">
             <span className="visually-hidden">Cargando...</span>
           </Spinner>
         </div>
-      )}
+      </Container>
+    );
+  }
 
-      {state.status === 'error' && (
+  // Error state (flow failed — dominates, no columns to show)
+  if (flowState.status === 'error') {
+    return (
+      <Container className="mt-4">
         <Alert variant="danger" className="text-center">
           <Alert.Heading>Error</Alert.Heading>
-          <p>{state.error}</p>
+          <p>{flowState.error}</p>
           <Button variant="outline-danger" onClick={loadInterviewFlow}>
             Reintentar
           </Button>
         </Alert>
-      )}
+      </Container>
+    );
+  }
 
-      {state.status === 'success' && (
-        <KanbanBoard
-          positionName={state.data.positionName}
-          interviewSteps={state.data.interviewFlow.interviewSteps}
-        />
-      )}
+  // Idle state — should not happen (initial state is 'loading'),
+  // but we need to narrow the union for TypeScript.
+  if (flowState.status === 'idle') {
+    return null;
+  }
+
+  // Success state — flow loaded, render board with candidates
+  return (
+    <Container className="mt-4">
+      <KanbanBoard
+        positionName={flowState.data.positionName}
+        interviewSteps={flowState.data.interviewFlow.interviewSteps}
+        candidates={
+          candidatesState.status === 'success' ? candidatesState.data : null
+        }
+        candidatesLoading={candidatesState.status === 'loading'}
+        candidatesError={
+          candidatesState.status === 'error' ? candidatesState.error : null
+        }
+        onRetryCandidates={loadCandidates}
+      />
     </Container>
   );
 };

@@ -64,6 +64,7 @@ export interface StageUpdateResponse {
 
 /** Discriminated union for the page loading state */
 export type PageState<T> =
+  | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'error'; error: string }
   | { status: 'success'; data: T };
