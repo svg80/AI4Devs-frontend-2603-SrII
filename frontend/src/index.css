@@ -11,3 +11,80 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* ─── Kanban Board ─── */
+
+.kanban-board {
+  display: flex;
+  flex-direction: column;
+  min-height: 60vh;
+}
+
+.kanban-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.kanban-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.kanban-columns {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  flex: 1;
+}
+
+/* ─── Kanban Column ─── */
+
+.kanban-column {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  min-width: 280px;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.kanban-column-header {
+  background: #e9ecef;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #dee2e6;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.kanban-column-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.kanban-column-body {
+  padding: 0.75rem;
+  flex: 1;
+  min-height: 120px;
+}
+
+/* ─── Responsive: stack columns on mobile ─── */
+
+@media (max-width: 768px) {
+  .kanban-columns {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+
+  .kanban-column {
+    min-width: 100%;
+    max-width: 100%;
+  }
+}

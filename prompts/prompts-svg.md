@@ -144,15 +144,29 @@ Modify @prompts/prompts-svg/create-backend-skill.md @prompts/prompts-svg/create-
 execute prompt @prompts/prompts-svg/create-backend-agent.md
 ``` 
 
-# Prompt  - 
+# Prompt 26 - Implementar tarea 1 
 ```text
-
+/develop-ticket @task/creando-interfaz-gestion-aplicaciones-lti/001-setup-ruta-y-tablero-kanban.enriched.md
 ``` 
 
-# Prompt  - 
+# Prompt 22 - Implementar tarea 2 
 ```text
-
+/develop-ticket @task/creando-interfaz-gestion-aplicaciones-lti/002-renderizar-tarjetas-de-candidatos.enriched.md
 ``` 
+
+# Prompt 15 - Generar prompt para un comando que implemente ticket
+```text
+Generate a new prompt in the folder @prompts/prompts-svg/ to create a command in the folder @.opencode/commands. That command will be using the agent @.opencode/agents/backend-dev/. The command knows how to develop given tickets/subtask and add the description of the PR in @task/pr_description.md. Use the best practices of prompt. Do not create the command, only them prompt.
+``` 
+
+# Prompt  16 - Corrección de errores detectados
+```text
+I don't see nothing when I go to localhost:3000
+``` 
+
+```text
+The button 'Ver proceso' in cards in localhost:3000/position don't work
+```
 
 # Prompt  - 
 ```text
